@@ -1,4 +1,5 @@
 import 'package:flutter_download_manager/flutter_download_manager.dart';
+import 'package:flutter_download_manager/src/downloader.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -14,7 +15,7 @@ void main() {
   var url6 = "https://static.gtaf.org/v1/quran/static/translation-db/10";
 
   test('future download', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     DownloadTask? task = await dl.addDownload(url4, "./test.mp4");
 
@@ -30,7 +31,7 @@ void main() {
   });
 
   test('parallel download', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     DownloadTask? task = await dl.addDownload(url2, "./test2.ipa");
     DownloadTask? task2 = await  dl.addDownload(url3, "./test3.ipa");
@@ -52,7 +53,7 @@ void main() {
   });
 
   test('cancel download', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     DownloadTask? task = await dl.addDownload(url5, "./test2.mp4");
 
@@ -68,7 +69,7 @@ void main() {
   });
 
   test('pause and resume download', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     DownloadTask? task = await dl.addDownload(url5, "./test2.mp4");
 
@@ -88,7 +89,7 @@ void main() {
   });
 
   test('handle empty url', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     DownloadTask? task = await dl.addDownload("", "");
 
@@ -100,7 +101,7 @@ void main() {
   });
 
   test('handle empty path', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     DownloadTask? task = await dl.addDownload(url3, "");
 
@@ -112,7 +113,7 @@ void main() {
   });
 
   test('handle url with empty extension', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     DownloadTask? task = await dl.addDownload(url6, "");
 
@@ -124,7 +125,7 @@ void main() {
   });
 
   test('download in batch', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     var urls = <String>[];
     urls.add(url2);
@@ -145,7 +146,7 @@ void main() {
   });
 
   test('download in batch by setting the savedDirectory only', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     var urls = <String>[];
     urls.add(url2);
@@ -164,7 +165,7 @@ void main() {
   });
 
   test('cancel a batched download', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     var urls = <String>[];
     urls.add(url6);
@@ -186,7 +187,7 @@ void main() {
   });
 
   test('cancel a single item in a batched download', () async {
-    var dl = DownloadManager();
+    var dl = IDownloader();
 
     var urls = <String>[];
     urls.add(url4);

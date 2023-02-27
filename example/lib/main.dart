@@ -43,7 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var url5 =
       "https://jsoncompare.org/LearningContainer/SampleFiles/Video/MP4/Sample-Video-File-For-Testing.mp4";
 
-  var downloadManager = DownloadManager();
+  var downloadManager = IDownloader();
   var savedDir = "";
 
   @override

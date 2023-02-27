@@ -6,29 +6,30 @@ import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_download_manager/flutter_download_manager.dart';
+import 'package:flutter_download_manager/src/idownloader.dart';
 
-class DownloadManager {
+import 'http/custom_http_client.dart';
+
+DownloadManager createObject({
+  required CustomHttpClient customHttpClient,
+}) =>
+    DownloadManager(
+      customHttpClient: customHttpClient,
+    );
+
+class DownloadManager implements IDownloader {
   final Map<String, DownloadTask> _cache = <String, DownloadTask>{};
   final Queue<DownloadRequest> _queue = Queue();
-  var dio = Dio();
   static const partialExtension = ".partial";
   static const tempExtension = ".temp";
 
   // var tasks = StreamController<DownloadTask>();
-
-  int maxConcurrentTasks = 2;
+  int maxConcurrentTasks;
   int runningTasks = 0;
+  late CustomHttpClient customHttpClient;
 
-  static final DownloadManager _dm = new DownloadManager._internal();
-
-  DownloadManager._internal();
-
-  factory DownloadManager({int? maxConcurrentTasks}) {
-    if (maxConcurrentTasks != null) {
-      _dm.maxConcurrentTasks = maxConcurrentTasks;
-    }
-    return _dm;
-  }
+  DownloadManager(
+      {required this.customHttpClient, this.maxConcurrentTasks = 2});
 
   void Function(int, int) createCallback(url, int partialFileLength) =>
       (int received, int total) {
@@ -38,7 +39,8 @@ class DownloadManager {
         if (total == -1) {}
       };
 
-  Future<void> download(String url, String savePath, cancelToken,
+  Future<void> download(
+      String url, String savePath, DownloadCancelToken cancelToken,
       {forceDownload = false}) async {
     try {
       var task = getDownload(url);
@@ -70,13 +72,16 @@ class DownloadManager {
 
         var partialFileLength = await partialFile.length();
 
-        var response = await dio.download(url, partialFilePath + tempExtension,
-            onReceiveProgress: createCallback(url, partialFileLength),
-            options: Options(
-              headers: {HttpHeaders.rangeHeader: 'bytes=$partialFileLength-'},
-            ),
-            cancelToken: cancelToken,
-            deleteOnError: true);
+        var response = await customHttpClient.download(
+          url,
+          partialFilePath + tempExtension,
+          onReceiveProgress: createCallback(url, partialFileLength),
+          cancelToken: cancelToken,
+          options: {
+            'partialFileLength': partialFileLength,
+            'deleteOnError': true,
+          },
+        );
 
         if (response.statusCode == HttpStatus.partialContent) {
           var ioSink = partialFile.openWrite(mode: FileMode.writeOnlyAppend);
@@ -89,10 +94,15 @@ class DownloadManager {
           setStatus(task, DownloadStatus.completed);
         }
       } else {
-        var response = await dio.download(url, partialFilePath,
-            onReceiveProgress: createCallback(url, 0),
-            cancelToken: cancelToken,
-            deleteOnError: false);
+        var response = await customHttpClient.download(
+          url,
+          partialFilePath,
+          onReceiveProgress: createCallback(url, 0),
+          cancelToken: cancelToken,
+          options: {
+            'deleteOnError': false,
+          },
+        );
 
         if (response.statusCode == HttpStatus.ok) {
           await partialFile.rename(savePath);
@@ -147,7 +157,8 @@ class DownloadManager {
           ? savedDir + Platform.pathSeparator + getFileNameFromUrl(url)
           : savedDir;
 
-      return _addDownloadRequest(DownloadRequest(url, downloadFilename));
+      return _addDownloadRequest(DownloadRequest(
+          url, downloadFilename, customHttpClient.generateToken()));
     }
   }
 
@@ -164,7 +175,8 @@ class DownloadManager {
       }
     }
 
-    _queue.add(DownloadRequest(downloadRequest.url, downloadRequest.path));
+    _queue.add(DownloadRequest(downloadRequest.url, downloadRequest.path,
+        downloadRequest.cancelToken));
     var task = DownloadTask(_queue.last);
 
     _cache[downloadRequest.url] = task;
@@ -201,7 +213,7 @@ class DownloadManager {
     }
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.downloading);
-    task.request.cancelToken = CancelToken();
+    task.request.cancelToken = customHttpClient.generateToken();
     _queue.add(task.request);
 
     _startExecution();

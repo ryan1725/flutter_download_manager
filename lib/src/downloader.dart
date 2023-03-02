@@ -42,6 +42,8 @@ class DownloadManager implements IDownloader {
   Future<void> download(
       String url, String savePath, DownloadCancelToken cancelToken,
       {forceDownload = false}) async {
+    late String partialFilePath;
+    late File partialFile;
     try {
       var task = getDownload(url);
 
@@ -54,8 +56,8 @@ class DownloadManager implements IDownloader {
         print(url);
       }
       var file = File(savePath.toString());
-      var partialFilePath = savePath + partialExtension;
-      var partialFile = File(partialFilePath);
+      partialFilePath = savePath + partialExtension;
+      partialFile = File(partialFilePath);
 
       var fileExist = await file.exists();
       var partialFileExist = await partialFile.exists();
@@ -120,6 +122,15 @@ class DownloadManager implements IDownloader {
           _startExecution();
         }
         rethrow;
+      } else if (task.status.value == DownloadStatus.paused) {
+        final ioSink = partialFile.openWrite(mode: FileMode.writeOnlyAppend);
+        final f = File(partialFilePath + tempExtension);
+        final fileExist = await f.exists();
+        if (fileExist) {
+          await ioSink.addStream(f.openRead());
+          await f.delete();
+        }
+        await ioSink.close();
       }
     }
 

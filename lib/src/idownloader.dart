@@ -1,19 +1,22 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_download_manager/src/http/custom_httpclient_impl.dart';
 
 import '../flutter_download_manager.dart';
 import 'download_status.dart';
 import 'download_task.dart';
 import 'downloader.dart';
-import 'http/custom_http_client_impl.dart';
+import 'http/custom_dio_impl.dart';
 
 abstract class DownloadCancelToken {
+  bool get isCancelled => false;
   void cancel([dynamic reason]);
   dynamic get proxy;
 }
 
 abstract class IDownloader {
   factory IDownloader() => createObject(
-        customHttpClient: CustomHttpClientImpl(),
+        //customHttpClient: CustomDioImpl(),
+        customHttpClient: CustomHttpClientImp(),
       );
 
   Future<void> download(

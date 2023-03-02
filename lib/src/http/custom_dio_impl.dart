@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_download_manager/src/download_http_response.dart';
 import 'package:flutter_download_manager/src/idownloader.dart';
 
 import '../download_token_proxy.dart';
@@ -8,9 +9,9 @@ import 'custom_http_client.dart';
 
 Dio dio = Dio();
 
-class CustomHttpClientImpl implements CustomHttpClient {
+class CustomDioImpl implements CustomHttpClient {
   @override
-  Future<Response> download(
+  Future<DownloadHttpResponse> download(
     String urlPath,
     String savePath, {
     DownloadProgressCallback? onReceiveProgress,
@@ -22,11 +23,12 @@ class CustomHttpClientImpl implements CustomHttpClient {
     final deleteOnError = options.containsKey('deleteOnError') &&
         options['deleteOnError'] as bool;
 
+    late Response response;
     if (options.containsKey('partialFileLength')) {
       final int partialFileLength = options.containsKey('partialFileLength')
           ? options['partialFileLength'] as int
           : 0;
-      return dio.download(
+      response = await dio.download(
         urlPath,
         savePath,
         onReceiveProgress: onReceiveProgress,
@@ -37,7 +39,7 @@ class CustomHttpClientImpl implements CustomHttpClient {
         cancelToken: cancelToken?.proxy,
       );
     } else {
-      return dio.download(
+      response = await dio.download(
         urlPath,
         savePath,
         onReceiveProgress: onReceiveProgress,
@@ -45,6 +47,7 @@ class CustomHttpClientImpl implements CustomHttpClient {
         cancelToken: cancelToken?.proxy,
       );
     }
+    return DownloadHttpResponse(response.statusCode ?? -1, response);
   }
 
   @override

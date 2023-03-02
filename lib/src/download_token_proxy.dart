@@ -1,4 +1,3 @@
-
 import 'idownloader.dart';
 
 class DownloadTokenProxy implements DownloadCancelToken {
@@ -13,4 +12,7 @@ class DownloadTokenProxy implements DownloadCancelToken {
       Function.apply(proxy?.cancel, [reason]);
     }
   }
+
+  @override
+  bool get isCancelled => throw UnimplementedError();
 }

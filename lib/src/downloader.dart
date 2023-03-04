@@ -214,8 +214,9 @@ class DownloadManager implements IDownloader {
     }
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.canceled);
-    _queue.remove(task.request);
+    
     task.request.cancelToken.cancel();
+    _queue.remove(task.request);
   }
 
   Future<void> resumeDownload(String url) async {

@@ -9,19 +9,23 @@ import 'http/custom_dio_impl.dart';
 
 abstract class DownloadCancelToken {
   bool get isCancelled => false;
+
   void cancel([dynamic reason]);
+
   dynamic get proxy;
 }
 
-enum DownloadStrategy{
-  FIFO,
-  LIFO
-}
+enum DownloadStrategy { FIFO, LIFO }
 
 abstract class IDownloader {
-  factory IDownloader({DownloadStrategy? strategy}) => createObject(
+  factory IDownloader({
+    DownloadStrategy? strategy,
+    int? maxConcurrentTasks,
+  }) =>
+      createObject(
         customHttpClient: CustomDioImpl(),
         strategy: strategy,
+        maxConcurrentTasks: maxConcurrentTasks,
       );
 
   Future<void> download(

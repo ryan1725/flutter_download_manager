@@ -13,10 +13,12 @@ import 'http/custom_http_client.dart';
 DownloadManager createObject({
   required CustomHttpClient customHttpClient,
   DownloadStrategy? strategy,
+  int? maxConcurrentTasks,
 }) =>
     DownloadManager(
       customHttpClient: customHttpClient,
-      strategy: strategy??DownloadStrategy.FIFO,
+      strategy: strategy ?? DownloadStrategy.FIFO,
+      maxConcurrentTasks: maxConcurrentTasks ?? 2,
     );
 
 class DownloadManager implements IDownloader {
@@ -32,7 +34,9 @@ class DownloadManager implements IDownloader {
   DownloadStrategy strategy;
 
   DownloadManager(
-      {required this.customHttpClient, this.maxConcurrentTasks = 2,this.strategy = DownloadStrategy.FIFO});
+      {required this.customHttpClient,
+      this.maxConcurrentTasks = 2,
+      this.strategy = DownloadStrategy.FIFO});
 
   void Function(int, int) createCallback(url, int partialFileLength) =>
       (int received, int total) {
@@ -217,7 +221,7 @@ class DownloadManager implements IDownloader {
     }
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.canceled);
-    
+
     task.request.cancelToken.cancel();
     _queue.remove(task.request);
   }
@@ -394,7 +398,9 @@ class DownloadManager implements IDownloader {
       if (kDebugMode) {
         print('Concurrent workers: $runningTasks');
       }
-      var currentRequest = strategy == DownloadStrategy.FIFO?_queue.removeFirst():_queue.removeLast();
+      var currentRequest = strategy == DownloadStrategy.FIFO
+          ? _queue.removeFirst()
+          : _queue.removeLast();
 
       download(
           currentRequest.url, currentRequest.path, currentRequest.cancelToken);

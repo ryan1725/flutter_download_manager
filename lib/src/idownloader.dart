@@ -13,10 +13,15 @@ abstract class DownloadCancelToken {
   dynamic get proxy;
 }
 
+enum DownloadStrategy{
+  FIFO,
+  LIFO
+}
+
 abstract class IDownloader {
-  factory IDownloader() => createObject(
-        //customHttpClient: CustomDioImpl(),
-        customHttpClient: CustomHttpClientImp(),
+  factory IDownloader({DownloadStrategy? strategy}) => createObject(
+        customHttpClient: CustomDioImpl(),
+        strategy: strategy,
       );
 
   Future<void> download(
